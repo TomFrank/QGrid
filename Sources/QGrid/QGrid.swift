@@ -29,8 +29,8 @@ import SwiftUI
 
 /// A container that presents rows of data arranged in multiple columns.
 @available(iOS 13.0, OSX 10.15, *)
-public struct QGrid<Data, Content>: View
-  where Data : RandomAccessCollection, Content : View, Data.Element : Identifiable {
+public struct QGrid<Data, ID, Content>: View
+  where Data : RandomAccessCollection, Content : View, ID : Hashable {
   private struct QGridIndex : Identifiable { var id: Int }
   
   // MARK: - STORED PROPERTIES
@@ -43,39 +43,10 @@ public struct QGrid<Data, Content>: View
   private let hPadding: CGFloat
   
   private let data: [Data.Element]
+  private let dataId: KeyPath<Data.Element, ID>
   private let content: (Data.Element) -> Content
   
-  // MARK: - INITIALIZERS
   
-  /// Creates a QGrid that computes its cells on demand from an underlying
-  /// collection of identified data.
-  ///
-  /// - Parameters:
-  ///     - data: A collection of identified data.
-  ///     - columns: Target number of columns for this grid, in Portrait device orientation
-  ///     - columnsInLandscape: Target number of columns for this grid, in Landscape device orientation; If not provided, `columns` value will be used.
-  ///     - vSpacing: Vertical spacing: The distance between each row in grid. If not provided, the default value will be used.
-  ///     - hSpacing: Horizontal spacing: The distance between each cell in grid's row. If not provided, the default value will be used.
-  ///     - vPadding: Vertical padding: The distance between top/bottom edge of the grid and the parent view. If not provided, the default value will be used.
-  ///     - hPadding: Horizontal padding: The distance between leading/trailing edge of the grid and the parent view. If not provided, the default value will be used.
-  ///     - content: A closure returning the content of the individual cell
-  public init(_ data: Data,
-              columns: Int,
-              columnsInLandscape: Int? = nil,
-              vSpacing: CGFloat = 10,
-              hSpacing: CGFloat = 10,
-              vPadding: CGFloat = 10,
-              hPadding: CGFloat = 10,
-              content: @escaping (Data.Element) -> Content) {
-    self.data = data.map { $0 }
-    self.content = content
-    self.columns = max(1, columns)
-    self.columnsInLandscape = columnsInLandscape ?? max(1, columns)
-    self.vSpacing = vSpacing
-    self.hSpacing = hSpacing
-    self.vPadding = vPadding
-    self.hPadding = hPadding
-  }
   
   // MARK: - COMPUTED PROPERTIES
   
@@ -139,3 +110,75 @@ public struct QGrid<Data, Content>: View
   }
 }
 
+// MARK: - INITIALIZERS
+@available(iOS 13.0, OSX 10.15, *)
+extension QGrid where ID == Data.Element.ID, Data.Element : Identifiable {
+    
+    /// Creates a QGrid that computes its cells on demand from an underlying
+    /// collection of identified data.
+    ///
+    /// - Parameters:
+    ///     - data: A collection of identified data.
+    ///     - columns: Target number of columns for this grid, in Portrait device orientation
+    ///     - columnsInLandscape: Target number of columns for this grid, in Landscape device orientation; If not provided, `columns` value will be used.
+    ///     - vSpacing: Vertical spacing: The distance between each row in grid. If not provided, the default value will be used.
+    ///     - hSpacing: Horizontal spacing: The distance between each cell in grid's row. If not provided, the default value will be used.
+    ///     - vPadding: Vertical padding: The distance between top/bottom edge of the grid and the parent view. If not provided, the default value will be used.
+    ///     - hPadding: Horizontal padding: The distance between leading/trailing edge of the grid and the parent view. If not provided, the default value will be used.
+    ///     - content: A closure returning the content of the individual cell
+    public init(_ data: Data,
+                columns: Int,
+                columnsInLandscape: Int? = nil,
+                vSpacing: CGFloat = 10,
+                hSpacing: CGFloat = 10,
+                vPadding: CGFloat = 10,
+                hPadding: CGFloat = 10,
+                content: @escaping (Data.Element) -> Content) {
+      self.data = data.map { $0 }
+      self.dataId = \Data.Element.id
+      self.content = content
+      self.columns = max(1, columns)
+      self.columnsInLandscape = columnsInLandscape ?? max(1, columns)
+      self.vSpacing = vSpacing
+      self.hSpacing = hSpacing
+      self.vPadding = vPadding
+      self.hPadding = hPadding
+    }
+}
+
+@available(iOS 13.0, OSX 10.15, *)
+extension QGrid {
+    
+    /// Creates a QGrid that computes its cells on demand from an underlying
+    /// collection of identified data.
+    ///
+    /// - Parameters:
+    ///     - data: A collection of identified data.
+    ///     - id: Key path to a property on an underlying data element.
+    ///     - columns: Target number of columns for this grid, in Portrait device orientation
+    ///     - columnsInLandscape: Target number of columns for this grid, in Landscape device orientation; If not provided, `columns` value will be used.
+    ///     - vSpacing: Vertical spacing: The distance between each row in grid. If not provided, the default value will be used.
+    ///     - hSpacing: Horizontal spacing: The distance between each cell in grid's row. If not provided, the default value will be used.
+    ///     - vPadding: Vertical padding: The distance between top/bottom edge of the grid and the parent view. If not provided, the default value will be used.
+    ///     - hPadding: Horizontal padding: The distance between leading/trailing edge of the grid and the parent view. If not provided, the default value will be used.
+    ///     - content: A closure returning the content of the individual cell
+    public init(_ data: Data,
+                id: KeyPath<Data.Element, ID>,
+                columns: Int,
+                columnsInLandscape: Int? = nil,
+                vSpacing: CGFloat = 10,
+                hSpacing: CGFloat = 10,
+                vPadding: CGFloat = 10,
+                hPadding: CGFloat = 10,
+                content: @escaping (Data.Element) -> Content) {
+      self.data = data.map { $0 }
+      self.dataId = id
+      self.content = content
+      self.columns = max(1, columns)
+      self.columnsInLandscape = columnsInLandscape ?? max(1, columns)
+      self.vSpacing = vSpacing
+      self.hSpacing = hSpacing
+      self.vPadding = vPadding
+      self.hPadding = hPadding
+    }
+}
